@@ -13,8 +13,7 @@ struct range {
 };
 
 struct range sector[] = {
-	{ 0x2ac000, 0x230b6 },
-	{ 0x2d0000, 0x1e5a8 },
+	{ 0x446000, 0x49200 },
 	{ 0, 0 },
 };
 
@@ -70,7 +69,7 @@ void find (FILE * fout, char *string, int offset, int length)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	FILE * fin = fopen ("th105.exe", "rb");
+	FILE * fin = fopen ("th123.exe", "rb");
 	if (fin == NULL) {
 		perror ("fopen");
 		return -1;

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <locale>
 
 extern "C"
 int * __errno() { return _errno(); }

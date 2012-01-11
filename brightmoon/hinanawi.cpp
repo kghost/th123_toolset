@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <stdexcept>
 #include <new>
+#include <vector>
 #include <boost/scoped_array.hpp>
+#include <Windows.h>
 #include "hinanawi.hpp"
 #include "mt.hpp"
 
@@ -74,6 +76,13 @@ bool HinanawiArchive_Base::DeserializeList(char *list_buf, uint32_t list_count, 
     if(entry.offset < list_size + 6 || entry.offset > filesize) return false;
     if(entry.size > static_cast<uint32_t>(filesize) - entry.offset) return false;
     if(entry.name == "") return false;
+	int wlen = MultiByteToWideChar(932, MB_PRECOMPOSED, entry.name.c_str(), entry.name.size(), NULL, 0);
+	std::vector<WCHAR> ws(wlen);
+	MultiByteToWideChar(932, MB_PRECOMPOSED, entry.name.c_str(), entry.name.size(), &ws[0], ws.size());
+	wlen = WideCharToMultiByte(CP_ACP, 0, &ws[0], ws.size(), NULL, 0, NULL, NULL);
+	std::vector<char> s(wlen);
+	WideCharToMultiByte(CP_ACP, 0, &ws[0], ws.size(), &s[0], s.size(), NULL, NULL);
+	entry.name = std::string(s.begin(), s.end());
     list.push_back(entry);
     p += 9 + name_len;
     offset += 9 + name_len;

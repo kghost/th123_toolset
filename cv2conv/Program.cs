@@ -102,40 +102,6 @@ namespace cv2conv
             }
         }
 
-        static void ProcessRCV2(string fileName, ProgramOptions options)
-        {
-            try
-            {
-                string inputName = Path.ChangeExtension(fileName, "png");
-                try {
-                    using (FileStream ifs = new FileStream(inputName, FileMode.Open, FileAccess.Read))
-                    {
-                        using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-                        {
-                            System.Console.WriteLine(inputName + " --> " + fileName);
-
-                            CV2Reader cv2 = new CV2Reader(fs);
-
-                            if (cv2.Header.bpp == 8)
-                            {
-                                throw new Exception("do NOT support Palette !!");
-                            }
-
-                            Bitmap image = cv2.GetImage();
-                            Image inputImage = Image.FromStream(ifs);
-
-                            inputImage.Save(outputName, options.ImageFormat);
-                        }
-                    }
-                } catch (System.IO.FileNotFoundException e) {
-                }
-            }
-            catch (Exception e)
-            {
-                System.Console.Error.Write(programName + " : " + e.Message);
-            }
-        }
-
         static void ProcessCV2(string fileName, ProgramOptions options)
         {
             try
@@ -269,7 +235,7 @@ namespace cv2conv
         private static Dictionary<int, int> bppTable
             = new Dictionary<int, int>();
 
-        public static CV2Header()
+        static CV2Header()
         {
             pixelFormatTable.Add(8, PixelFormat.Format8bppIndexed);
             pixelFormatTable.Add(16, PixelFormat.Format16bppRgb565);

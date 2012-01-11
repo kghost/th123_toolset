@@ -6,13 +6,35 @@
 #include <new>
 #include <list>
 #include <string>
+#include <vector>
 #include <boost/scoped_array.hpp>
 #include "mt.hpp"
 
-struct ArchiveFile {
-	std::string name;
-	unsigned __int32 size;
+class ArchiveFile {
+public:
+	ArchiveFile(const std::string &name, unsigned __int32 size)
+	{
+		filename = name;
+		int wlen = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, name.c_str(), name.size(), NULL, 0);
+		std::vector<WCHAR> ws(wlen);
+		MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, name.c_str(), name.size(), &ws[0], ws.size());
+		wlen = WideCharToMultiByte(932, 0, &ws[0], ws.size(), NULL, 0, NULL, NULL);
+		std::vector<char> s(wlen);
+		WideCharToMultiByte(932, 0, &ws[0], ws.size(), &s[0], s.size(), NULL, NULL);
+		archivename = std::string(s.begin(), s.end());
+		filesize = size;
+		offset = 0;
+	}
+
+	std::string get_filename () { return filename; }
+	std::string get_archivename () { return archivename; }
+	unsigned __int32 get_filesize () { return filesize; }
+
 	unsigned __int32 offset;
+private:
+	std::string filename;
+	std::string archivename;
+	unsigned __int32 filesize;
 };
 
 void find_file (std::list<ArchiveFile> &l,std::string path)
@@ -37,9 +59,9 @@ void find_file (std::list<ArchiveFile> &l,std::string path)
 			continue;
 		}
 
-		ArchiveFile a = { path + FindFileData.cFileName, FindFileData.nFileSizeLow };
+		ArchiveFile a(path + FindFileData.cFileName, FindFileData.nFileSizeLow);
 		l.push_back(a);
-		printf (TEXT("File %s length %d\n"), a.name.c_str(), a.size);
+		printf (TEXT("File %s length %d\n"), a.get_filename().c_str(), a.get_filesize());
 	} while (FindNextFile(hFind, &FindFileData));
 	FindClose(hFind);
 }
@@ -91,16 +113,16 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (strcmp(FindFileData.cFileName, "archive.dat") == 0)
 			continue;
 
-		ArchiveFile a = { std::string(FindFileData.cFileName), FindFileData.nFileSizeLow };
+		ArchiveFile a(std::string(FindFileData.cFileName), FindFileData.nFileSizeLow);
 		l.push_back(a);
-		printf (TEXT("File %s length %d\n"), a.name.c_str(), a.size);
+		printf (TEXT("File %s length %d\n"), a.get_filename().c_str(), a.get_filesize());
 	} while (FindNextFile(hFind, &FindFileData));
 	FindClose(hFind);
 
 	// calculate header size
 	unsigned __int32 list_size = 0;
 	for (std::list<ArchiveFile>::iterator i = l.begin(); i != l.end(); ++i) {
-		list_size += 9 + i->name.length();
+		list_size += 9 + i->get_archivename().length();
 	}
 
 	// build header
@@ -111,12 +133,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	int offset = 6 + list_size;
 	for (std::list<ArchiveFile>::iterator i = l.begin(); i != l.end(); ++i) {
 		*reinterpret_cast<unsigned __int32 *>(p) = offset;
-		*reinterpret_cast<unsigned __int32 *>(p + 4) = i->size;
+		*reinterpret_cast<unsigned __int32 *>(p + 4) = i->get_filesize();
 		i->offset = offset;
-		offset += i->size;
-		int namelen = i->name.length();
+		offset += i->get_filesize();
+		int namelen = i->get_archivename().length();
 		*reinterpret_cast<unsigned __int8 *>(p + 8) = namelen;
-		memcpy(p+9, i->name.c_str(), namelen);
+		memcpy(p+9, i->get_archivename().c_str(), namelen);
 		p += 9 + namelen;
 	}
 
@@ -151,23 +173,23 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	// write files
 	for (std::list<ArchiveFile>::iterator i = l.begin(); i != l.end(); ++i) {
-		HANDLE hFile = CreateFile (i->name.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		HANDLE hFile = CreateFile (i->get_filename().c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			printf ("OpenFile failed (%d)\n", GetLastError());
 		}
 
-		boost::scoped_array<char> file_buf(new (std::nothrow) char[i->size]);
+		boost::scoped_array<char> file_buf(new (std::nothrow) char[i->get_filesize()]);
 		if(!file_buf) return -1;
 
-		if (ReadFile (hFile, file_buf.get(), i->size, &tmp, NULL) == 0) {
+		if (ReadFile (hFile, file_buf.get(), i->get_filesize(), &tmp, NULL) == 0) {
 			printf ("WriteFile failed (%d)\n", GetLastError());
 		}
 
 		unsigned __int8 k = (i->offset >> 1) | 0x23;
-		for(unsigned __int32 j = 0; j < i->size; ++j)
+		for(unsigned __int32 j = 0; j < i->get_filesize(); ++j)
 			file_buf[j] ^= k;
 
-		if (WriteFile (hArchive, file_buf.get(), i->size, &tmp, NULL) == 0) {
+		if (WriteFile (hArchive, file_buf.get(), i->get_filesize(), &tmp, NULL) == 0) {
 			printf ("WriteFile failed (%d)\n", GetLastError());
 		}
 	}

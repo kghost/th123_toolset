@@ -348,7 +348,11 @@ void MainMenu_OnExtract(HWND hwnd)
       PathRemoveFileSpecEx(&filepath[0]);
       if(filepath[0])
         MakeSureDirectoryPathExists(&filepath[0]);
-      std::ofstream os(&outname[0], std::ios_base::binary);
+	  int wlen = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &outname[0], outname.size(), NULL, 0);
+	  std::vector<WCHAR> ws(wlen);
+	  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &outname[0], outname.size(), &ws[0], ws.size());
+	  ws.push_back(0);
+      std::ofstream os(&ws[0], std::ios_base::binary);
       if(os.fail()) {
         throw std::exception();
       } else {

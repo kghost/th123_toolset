@@ -16,7 +16,7 @@ int mystrlen (char * s)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	FILE * fmod = fopen ("th105.exe", "rb+");
+	FILE * fmod = fopen ("th123.exe", "rb+");
 	if (fmod == NULL) {
 		perror ("fopen");
 		return -1;
