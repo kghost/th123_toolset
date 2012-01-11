@@ -1,0 +1,42 @@
+#include <windows.h>
+#include "resource.h"
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+
+IDM_MENU MENU DISCARDABLE 
+BEGIN
+  POPUP "&File"
+  BEGIN
+    MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
+    MENUITEM "&Close",                      ID_FILE_CLOSE, GRAYED
+    MENUITEM SEPARATOR
+    MENUITEM "&Extract\tF5",                ID_FILE_EXTRACT, GRAYED
+    MENUITEM "&Quit",                       ID_FILE_QUIT
+  END
+  POPUP "&List", GRAYED
+  BEGIN
+    MENUITEM "Select &All\tCtrl+A",         ID_LIST_SELALL
+    MENUITEM "&Inverse selection",          ID_LIST_SELINV
+  END
+END
+
+IDR_ACCEL ACCELERATORS DISCARDABLE 
+BEGIN
+    "A",            ID_LIST_SELALL,         VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    VK_F5,          ID_FILE_EXTRACT,        VIRTKEY, NOINVERT
+END
+
+IDD_STATUS DIALOG DISCARDABLE  0, 0, 215, 138
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION
+CAPTION "Status"
+FONT 9, "MS UI Gothic"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,162,120,50,14
+    EDITTEXT        IDC_EDIT_STATUS,2,2,210,115, ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | 
+                    WS_DISABLED | WS_VSCROLL
+END
+
+1 24 "pbgmgr.xml"
